@@ -9,7 +9,7 @@ from .embedders import Embedder, HashingEmbedder
 from .generators import ExtractiveGenerator, Generator
 from .loaders import load_directory, load_text, load_url
 from .store import VectorStore
-from .types import Chunk, Document, Retrieved, as_documents
+from .types import Chunk, Document, Retrieved, as_documents, unique_sources
 
 PROMPT_RULES = (
     "Answer the question using only the context below.\n"
@@ -125,11 +125,8 @@ class RagPipeline:
         prompt = self.build_prompt(question, retrieved)
         text = self.generator.generate(prompt, context=context)
 
-        sources: List[str] = []
-        for item in retrieved:
-            if item.source not in sources:
-                sources.append(item.source)
-        return Answer(text=text, sources=sources, retrieved=retrieved, prompt=prompt)
+        return Answer(text=text, sources=unique_sources(retrieved),
+                      retrieved=retrieved, prompt=prompt)
 
     # -- persistence ------------------------------------------------------
 

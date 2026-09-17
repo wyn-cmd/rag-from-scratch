@@ -48,6 +48,15 @@ class Retrieved:
         return self.chunk.source
 
 
+def unique_sources(items: List[Retrieved]) -> List[str]:
+    """Source names in the order they were retrieved, without repeats."""
+    seen: List[str] = []
+    for item in items:
+        if item.source not in seen:
+            seen.append(item.source)
+    return seen
+
+
 def as_documents(items: List[Any]) -> List[Document]:
     """Accept strings or Documents and return Documents.
 
