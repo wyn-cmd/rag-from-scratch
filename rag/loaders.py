@@ -51,9 +51,11 @@ def load_directory(path: str, glob: str = "*.md", recursive: bool = False) -> Li
         if not os.path.isfile(match):
             continue
         try:
-            documents.append(load_text(match))
+            document = load_text(match)
         except OSError:
             continue
+        if document.text.strip():
+            documents.append(document)
     return documents
 
 
