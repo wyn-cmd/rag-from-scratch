@@ -8,6 +8,7 @@ model. Real generators only need the prompt, since the context is already
 formatted into it by the pipeline.
 """
 
+import re
 from typing import List, Optional
 
 
@@ -27,13 +28,17 @@ class ExtractiveGenerator(Generator):
     because torch is missing.
     """
 
-    def __init__(self, max_chars: int = 600) -> None:
+    def __init__(self, max_chars: int = 600, max_sentences: int = 4) -> None:
         self.max_chars = max_chars
+        self.max_sentences = max_sentences
 
     def generate(self, prompt: str, context: str = "") -> str:
         passage = (context or "").strip()
         if not passage:
             return "No context was retrieved, so there is nothing to quote."
+        # stop at a sentence end so the quote does not trail off mid clause
+        sentences = re.split(r"(?<=[.!?])\s+", passage)[:self.max_sentences]
+        passage = " ".join(sentences).strip()
         if len(passage) > self.max_chars:
             passage = passage[:self.max_chars].rsplit(" ", 1)[0] + " ..."
         return (
