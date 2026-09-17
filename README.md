@@ -14,7 +14,7 @@ Frameworks are good once you know what you want. For learning, they hide the two
 2. **Chunk.** Text is split on paragraph boundaries, and paragraphs longer than the limit are split on sentence boundaries, with overlap so a fact that straddles a boundary is still retrievable.
 3. **Embed.** Each chunk becomes a vector. The default model-backed embedder is `all-MiniLM-L6-v2` through sentence-transformers, which is small, fast and good enough for retrieval on prose.
 4. **Store.** Vectors and chunk text go into an in-memory store that scores by cosine similarity. It saves to JSON so an index survives a restart.
-5. **Retrieve.** A question is embedded with the same model and the top-k chunks are pulled, optionally filtered by a minimum score.
+5. **Retrieve.** A question is embedded with the same model and the top-k chunks are pulled. A minimum score trims the tail, and the floor is inclusive: a chunk scoring exactly 0.0 stays while anything negative is dropped.
 6. **Assemble.** The retrieved chunks are formatted into a context block with source labels.
 7. **Generate.** The prompt goes to a text-generation model, and the answer comes back with the sources that informed it.
 
