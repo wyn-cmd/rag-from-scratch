@@ -1,0 +1,21 @@
+# python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# generated indexes and caches
+*.index.json
+index.json
+.cache/
+models/
+
+# editor and OS clutter
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.zip
+
+# notebook checkpoints, in case any experiment starts as one
+.ipynb_checkpoints/
