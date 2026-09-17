@@ -129,6 +129,22 @@ Answer:
 
 The instruction to admit ignorance matters more than it looks. Without it, a model asked a question the context does not cover will answer from its own weights, and the whole point of retrieval is that it should not.
 
+## Testing
+
+```bash
+python3 -m unittest discover tests -v
+```
+
+The suite runs on the standard library alone: no network, no model downloads, no fixtures to generate. It covers chunk sizing and overlap, the cosine maths and the store round trip, retrieval ranking including the score floor, prompt assembly, and the HTML cleanup in the loaders. The two model backed classes are the only paths not covered, because exercising them means downloading gigabytes.
+
+## Testing
+
+```bash
+python3 -m unittest discover tests -v
+```
+
+The suite runs on the standard library alone: no network, no model downloads, no fixtures to generate. It covers chunk sizing and overlap, the cosine maths and the store round trip, retrieval ranking including the score floor, prompt assembly, and the HTML cleanup in the loaders. The two model backed classes are the only paths not covered, because exercising them means downloading gigabytes.
+
 ## Known limits
 
 - Retrieval is a single vector per chunk with no reranking, so a question whose wording shares little vocabulary with the answer will miss.
