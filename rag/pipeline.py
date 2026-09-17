@@ -49,8 +49,10 @@ class RagPipeline:
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
         self.min_chunk_chars = min_chunk_chars
+        if top_k < 1:
+            raise ValueError("top_k must be at least 1")
         self.top_k = top_k
-        self.min_score = min_score
+        self.min_score = float(min_score)
 
     def __len__(self) -> int:
         return len(self.store)
