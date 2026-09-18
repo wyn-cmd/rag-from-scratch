@@ -145,6 +145,28 @@ python3 -m unittest discover tests -v
 
 The suite runs on the standard library alone: no network, no model downloads, no fixtures to generate. It covers chunk sizing and overlap, the cosine maths and the store round trip, retrieval ranking including the score floor, prompt assembly, and the HTML cleanup in the loaders. The two model backed classes are the only paths not covered, because exercising them means downloading gigabytes.
 
+## Worked example
+
+`examples/demo_offline.py` indexes the five document corpus held in that file. Trimmed output from a run:
+
+```
+indexed 6 chunks from 5 documents
+6 chunks, 1024 dimensions, embedder=HashingEmbedder, generator=ExtractiveGenerator
+
+Q: Are telescope bookings free for students?
+   best match: bookings.md (chunk 0) score 0.357
+   sources: bookings.md, instruments.md
+
+Q: How much does a student pay to reserve a slot?
+   best match: membership.md (chunk 1) score 0.099
+
+Q: Does the observatory run a planetarium?  (min_score 0.2)
+   sources: none
+   answer: Nothing in the index matched that question, so there is no answer to give.
+```
+
+The third question asks what the first two ask, in different words, and scores 0.099 against 0.357 for a shared vocabulary match. That gap is the argument for real embeddings, visible in one run.
+
 ## Known limits
 
 - Retrieval is a single vector per chunk with no reranking, so a question whose wording shares little vocabulary with the answer will miss.
