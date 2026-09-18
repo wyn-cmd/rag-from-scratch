@@ -19,3 +19,9 @@ Thumbs.db
 
 # notebook checkpoints, in case any experiment starts as one
 .ipynb_checkpoints/
+
+# logs and tool caches
+*.log
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
