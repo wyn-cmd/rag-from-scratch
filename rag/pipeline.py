@@ -87,12 +87,15 @@ class RagPipeline:
         return self.add_documents(documents)
 
     def index_file(self, path: str) -> int:
+        """Index one file. Returns the number of chunks added."""
         return self.add_documents([load_text(path)])
 
     def index_directory(self, path: str, glob: str = "*.md", recursive: bool = False) -> int:
+        """Index every matching file under a directory."""
         return self.add_documents(load_directory(path, glob=glob, recursive=recursive))
 
     def index_url(self, url: str) -> int:
+        """Fetch a page, strip it to text and index it. Needs the optional stack."""
         return self.add_documents([load_url(url)])
 
     # -- querying ---------------------------------------------------------
