@@ -1,5 +1,7 @@
-# Core pipeline: standard library only, nothing to install.
-# Optional stack for real embeddings and real generation:
+# Nothing here is needed for the core pipeline, which is standard library
+# only. These are for the model backed backends and the URL loader.
+#
+# real retrieval and real generation
 sentence-transformers>=2.7,<4
 transformers>=4.44,<5
 torch>=2.3,<3
