@@ -30,6 +30,12 @@ class Answer:
     def __bool__(self) -> bool:
         return bool(self.text.strip())
 
+    def __str__(self) -> str:
+        stripped = self.text.strip()
+        if not self.sources:
+            return stripped
+        return f"{stripped}\n\nsources: {', '.join(self.sources)}"
+
 
 class RagPipeline:
     """A retrieval augmented generation pipeline with swappable stage objects."""
