@@ -55,18 +55,22 @@ class VectorStore:
         self._chunks.extend(chunks)
         self._vectors.extend([list(vector) for vector in vectors])
 
-    def search(self, query_vector: Sequence[float], top_k: int = 4,
+    def search(self, query_vector: Sequence[float], top_k: Optional[int] = 4,
                min_score: float = 0.0) -> List[Retrieved]:
-        """Best `top_k` chunks above `min_score`, highest first."""
-        if top_k <= 0:
-            raise ValueError("top_k must be positive")
+        """Best `top_k` chunks above `min_score`, highest first.
+
+        Pass `top_k=None` to get everything that clears the floor, which is
+        useful when inspecting an index rather than answering a question.
+        """
+        if top_k is not None and top_k <= 0:
+            raise ValueError("top_k must be positive, or None for everything")
         scored = [
             Retrieved(chunk=chunk, score=cosine(query_vector, vector))
             for chunk, vector in zip(self._chunks, self._vectors)
         ]
         scored = [item for item in scored if item.score >= min_score]
         scored.sort(key=lambda item: item.score, reverse=True)
-        return scored[:top_k]
+        return scored if top_k is None else scored[:top_k]
 
     def clear(self) -> None:
         self._chunks = []
