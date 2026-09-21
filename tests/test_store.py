@@ -17,6 +17,7 @@ def chunk(text, source="doc.md", index=0):
 
 
 class CosineTests(unittest.TestCase):
+
     def test_identical_vectors_score_one(self):
         self.assertAlmostEqual(cosine([1.0, 2.0, 3.0], [1.0, 2.0, 3.0]), 1.0, places=6)
 
@@ -32,6 +33,7 @@ class CosineTests(unittest.TestCase):
 
 
 class VectorStoreTests(unittest.TestCase):
+
     def setUp(self):
         self.embedder = HashingEmbedder(dim=256)
         self.store = VectorStore()
@@ -40,8 +42,7 @@ class VectorStoreTests(unittest.TestCase):
             "The dome closes at 23:00 on open nights.",
             "Lightning alerts last thirty minutes.",
         ]
-        self.store.add([chunk(t, index=i) for i, t in enumerate(texts)],
-                       self.embedder.embed(texts))
+        self.store.add([chunk(t, index=i) for i, t in enumerate(texts)], self.embedder.embed(texts))
 
     def test_search_returns_best_match_first(self):
         results = self.store.search(self.embedder.embed(["student telescope bookings"])[0], top_k=3)
@@ -52,17 +53,14 @@ class VectorStoreTests(unittest.TestCase):
         self.assertEqual(scores, sorted(scores, reverse=True))
 
     def test_negative_similarity_is_dropped_by_default(self):
-        # a chunk whose vector opposes the query scores -1 and must not reach the
-        # context block, since the default floor is 0.0
+        # A chunk whose vector opposes the query scores -1 and must not reach the context block, since the default floor is 0.0.
         store = VectorStore()
-        store.add([chunk("opposite"), chunk("aligned")],
-                  [[-1.0, 0.0, 0.0], [1.0, 0.0, 0.0]])
+        store.add([chunk("opposite"), chunk("aligned")], [[-1.0, 0.0, 0.0], [1.0, 0.0, 0.0]])
         results = store.search([1.0, 0.0, 0.0], top_k=5)
         self.assertEqual([item.text for item in results], ["aligned"])
 
     def test_a_floor_of_zero_keeps_zero_scoring_chunks(self):
-        # documented behaviour: the floor is inclusive, so an orthogonal chunk
-        # (score 0.0) still comes back
+        # Documented behaviour: the floor is inclusive, so an orthogonal chunk (score 0.0) still comes back.
         store = VectorStore()
         store.add([chunk("orthogonal")], [[0.0, 1.0, 0.0]])
         results = store.search([1.0, 0.0, 0.0], top_k=5)
@@ -74,8 +72,11 @@ class VectorStoreTests(unittest.TestCase):
         self.assertEqual(len(results), 1)
 
     def test_min_score_filters_results(self):
-        results = self.store.search(self.embedder.embed(["completely unrelated words"])[0],
-                                    top_k=3, min_score=0.9)
+        results = self.store.search(
+            self.embedder.embed(["completely unrelated words"])[0],
+            top_k=3,
+            min_score=0.9,
+        )
         self.assertEqual(results, [])
 
     def test_nothing_indexed_returns_nothing(self):
