@@ -25,7 +25,7 @@ class Chunk:
 
     @property
     def chunk_id(self) -> str:
-        # stable across runs so a saved index still lines up
+        # Stable across runs so a saved index still lines up.
         return f"{self.source}#{self.index}"
 
     def label(self) -> str:
@@ -49,21 +49,19 @@ class Retrieved:
 
 
 def unique_sources(items: List[Retrieved]) -> List[str]:
-    """Source names in the order they were retrieved, without repeats."""
-    seen: List[str] = []
+    """Return source names in the order they were retrieved, without repeats."""
+    seen = set()
+    sources = []
     for item in items:
         if item.source not in seen:
-            seen.append(item.source)
-    return seen
+            seen.add(item.source)
+            sources.append(item.source)
+    return sources
 
 
 def as_documents(items: List[Any]) -> List[Document]:
-    """Accept strings or Documents and return Documents.
-
-    Convenience so callers can pass a plain list of strings without wrapping each
-    one, which is what most experiments actually start with.
-    """
-    documents: List[Document] = []
+    """Accept strings or Documents and return Documents for easy pipeline ingestion."""
+    documents = []
     for position, item in enumerate(items):
         if isinstance(item, Document):
             documents.append(item)
