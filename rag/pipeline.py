@@ -90,6 +90,16 @@ class RagPipeline:
         """Index one file. Returns the number of chunks added."""
         return self.add_documents([load_text(path)])
 
+    def reindex_file(self, path: str) -> int:
+        # Replace one file's chunks with a fresh read from disk.
+        #
+        # add_documents alone cannot correct a changed file: calling it twice
+        # on the same path leaves both the old and the new chunks in the store,
+        # since nothing there keys on source. This drops the old ones first.
+        document = load_text(path)
+        self.store.remove_source(document.source)
+        return self.add_documents([document])
+
     def index_directory(self, path: str, glob: str = "*.md", recursive: bool = False) -> int:
         """Index every matching file under a directory."""
         return self.add_documents(load_directory(path, glob=glob, recursive=recursive))
@@ -108,6 +118,23 @@ class RagPipeline:
         return self.store.search(
             vector,
             top_k=self.top_k if top_k is None else top_k,
+            min_score=self.min_score if min_score is None else min_score,
+        )
+
+    def retrieve_all(self, question: str, min_score: Optional[float] = None) -> List[Retrieved]:
+        # Every chunk above the floor, not just the top self.top_k.
+        #
+        # The store already supports this through search(top_k=None), but
+        # retrieve() only ever passes an int: top_k=None there means "use the
+        # pipeline default", so there was no way to reach it without building
+        # a VectorStore query by hand. Useful for inspecting an index, or for
+        # a caller who wants to apply their own ranking on top of the scores.
+        if not len(self.store):
+            return []
+        vector = self.embedder.embed([question])[0]
+        return self.store.search(
+            vector,
+            top_k=None,
             min_score=self.min_score if min_score is None else min_score,
         )
 

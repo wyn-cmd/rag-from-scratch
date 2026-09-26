@@ -113,6 +113,30 @@ class PipelineTests(unittest.TestCase):
         pipeline.add_texts(["injected store text"])
         self.assertEqual(len(store), 1)
 
+    def test_reindex_file_replaces_stale_chunks(self):
+        pipeline = RagPipeline(embedder=HashingEmbedder(dim=128))
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, "notes.md")
+            with open(path, "w", encoding="utf-8") as handle:
+                handle.write("The original text about apples.")
+            pipeline.index_file(path)
+            self.assertEqual(len(pipeline), 1)
+
+            with open(path, "w", encoding="utf-8") as handle:
+                handle.write("A completely different sentence about oranges.")
+            pipeline.reindex_file(path)
+
+            # exactly one chunk survives, and it is the new text, not both
+            self.assertEqual(len(pipeline), 1)
+            self.assertIn("oranges", pipeline.store.chunks[0].text)
+
+    def test_retrieve_all_returns_more_than_top_k(self):
+        pipeline = build(top_k=1)
+        capped = pipeline.retrieve("student")
+        self.assertLessEqual(len(capped), 1)
+        everything = pipeline.retrieve_all("student", min_score=-1.0)
+        self.assertEqual(len(everything), len(CORPUS))
+
 
 if __name__ == "__main__":
     unittest.main()

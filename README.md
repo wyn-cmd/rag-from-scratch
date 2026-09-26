@@ -96,6 +96,18 @@ pipeline.index_directory("docs/", glob="*.md")
 pipeline.save("index.json")     # reuse it later with RagPipeline.load("index.json", ...)
 ```
 
+When a source file changes, `add_documents`/`index_file` alone will not correct the index: calling it again on the same path adds the new chunks alongside the old ones, since nothing keys on source. Use `reindex_file` instead, which drops that file's chunks before re-adding it:
+
+```python
+pipeline.reindex_file("docs/faq.md")   # replaces, does not duplicate
+```
+
+`retrieve` always caps results at `top_k`. To get every chunk above the score floor instead, for inspecting an index or applying your own ranking, use `retrieve_all`:
+
+```python
+everything = pipeline.retrieve_all("what does the corpus say about pricing", min_score=0.1)
+```
+
 ## The two fallback backends
 
 **HashingEmbedder** hashes tokens into a fixed number of buckets and normalises the result. It behaves like a bag-of-words vector, so retrieval works on shared vocabulary rather than meaning. Good enough to prove the pipeline end to end and to run tests. It will not match a paraphrase, which is exactly the thing real embeddings are for.

@@ -114,6 +114,40 @@ class VectorStoreTests(unittest.TestCase):
         self.assertEqual(len(self.store), 0)
         self.assertIsNone(self.store.dim)
 
+    def test_remove_source_drops_only_that_source(self):
+        self.store.add([chunk("second doc", source="other.md", index=0)],
+                       self.embedder.embed(["second doc"]))
+        removed = self.store.remove_source("doc.md")
+        self.assertEqual(removed, 3)
+        self.assertEqual(len(self.store), 1)
+        self.assertEqual(self.store.chunks[0].source, "other.md")
+
+    def test_remove_source_with_no_match_removes_nothing(self):
+        before = len(self.store)
+        removed = self.store.remove_source("nope.md")
+        self.assertEqual(removed, 0)
+        self.assertEqual(len(self.store), before)
+
+    def test_save_leaves_no_temp_file_behind(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, "index.json")
+            self.store.save(path)
+            names = os.listdir(tmp)
+            self.assertEqual(names, ["index.json"])
+
+    def test_save_is_atomic_on_a_failing_encode(self):
+        # A payload that json cannot serialise must not leave a half written
+        # file at the destination path, since that would look like a valid
+        # but truncated index the next time something tries to load it.
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, "index.json")
+            store = VectorStore()
+            store.add([chunk("bad")], [[0.0, 1.0]])
+            store._vectors[0] = [object()]  # not json serialisable
+            with self.assertRaises(TypeError):
+                store.save(path)
+            self.assertEqual(os.listdir(tmp), [])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,8 +1,9 @@
-"""Cosine similarity search over chunk vectors, with JSON persistence."""
+# Cosine similarity search over chunk vectors, with JSON persistence.
 
 import json
 import math
 import os
+import tempfile
 from typing import Iterable, List, Optional, Sequence
 
 from .types import Chunk, Retrieved
@@ -77,6 +78,25 @@ class VectorStore:
         self._vectors = []
         self.dim = None
 
+    def remove_source(self, source: str) -> int:
+        # Drop every chunk from one source. Returns how many were removed.
+        #
+        # Re-adding a changed file without this first would leave the old
+        # chunks in the store alongside the new ones: the stale text keeps
+        # matching queries and the index only grows, never corrects itself.
+        keep_chunks: List[Chunk] = []
+        keep_vectors: List[List[float]] = []
+        removed = 0
+        for chunk, vector in zip(self._chunks, self._vectors):
+            if chunk.source == source:
+                removed += 1
+            else:
+                keep_chunks.append(chunk)
+                keep_vectors.append(vector)
+        self._chunks = keep_chunks
+        self._vectors = keep_vectors
+        return removed
+
     def save(self, path: str) -> None:
         payload = {
             "version": 1,
@@ -93,10 +113,24 @@ class VectorStore:
                 for chunk, vector in zip(self._chunks, self._vectors)
             ],
         }
-        directory = os.path.dirname(os.path.abspath(path))
+        directory = os.path.dirname(os.path.abspath(path)) or "."
         os.makedirs(directory, exist_ok=True)
-        with open(path, "w", encoding="utf-8") as handle:
-            json.dump(payload, handle)
+        # Written to a temp file in the same directory and swapped into place with
+        # os.replace, which POSIX and Windows both guarantee is atomic. Without this
+        # a save interrupted partway (killed process, full disk) leaves a truncated
+        # JSON file where the index used to be, and the next load fails on an index
+        # that looked fine seconds earlier.
+        fd, temp_path = tempfile.mkstemp(prefix=".tmp-", suffix=".json", dir=directory)
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as handle:
+                json.dump(payload, handle)
+            os.replace(temp_path, path)
+        except BaseException:
+            try:
+                os.remove(temp_path)
+            except OSError:
+                pass
+            raise
 
     @classmethod
     def load(cls, path: str) -> "VectorStore":
