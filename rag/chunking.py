@@ -13,6 +13,9 @@ _PARAGRAPH = re.compile(r"\n\s*\n")
 _SENTENCE = re.compile(r"(?<=[.!?])\s+")
 
 
+# -- chunking ---------------------------------------------------------
+#
+# Helper utilities for splitting large docs into chunks.
 def split_paragraphs(text: str) -> List[str]:
     return [part.strip() for part in _PARAGRAPH.split(text) if part.strip()]
 
@@ -21,6 +24,9 @@ def split_sentences(paragraph: str) -> List[str]:
     return [part.strip() for part in _SENTENCE.split(paragraph) if part.strip()]
 
 
+# -- hard-wrap --------------------------------------------------------
+#
+# No chunk can ever exceed max_chars.
 def _hard_wrap(text: str, size: int) -> List[str]:
     words = text.split()
     if not words:
@@ -47,6 +53,9 @@ def _hard_wrap(text: str, size: int) -> List[str]:
     return out
 
 
+# -- pieces -----------------------------------------------------------
+#
+# Break text into paragraphs, then sentences if they are too long.
 def _pieces(text: str, max_chars: int) -> List[str]:
     pieces: List[str] = []
     for paragraph in split_paragraphs(text):
@@ -68,6 +77,9 @@ def _tail_from(chunk: str, overlap: int) -> str:
     return tail.strip()
 
 
+# -- chunking-public --------------------------------------------------
+#
+# Main interface for chunking.
 def chunk_text(text: str, max_chars: int = 800, overlap: int = 120, min_chars: int = 80) -> List[str]:
     # Split text into chunks of at most `max_chars`, with `overlap` carried over.
     #
@@ -114,6 +126,9 @@ def chunk_text(text: str, max_chars: int = 800, overlap: int = 120, min_chars: i
     return chunks
 
 
+# -- document-indexing ------------------------------------------------
+#
+# Helper utilities for indexing full documents.
 def chunk_document(document: Document, max_chars: int = 800, overlap: int = 120,
                    min_chars: int = 80) -> List[Chunk]:
     # Chunk one document, recording roughly where each chunk came from.
@@ -129,6 +144,9 @@ def chunk_document(document: Document, max_chars: int = 800, overlap: int = 120,
     return chunks
 
 
+# -- batch-indexing ---------------------------------------------------
+#
+# Helper utilities for indexing lists of documents.
 def chunk_documents(documents: Iterable[Document], max_chars: int = 800, overlap: int = 120,
                     min_chars: int = 80) -> List[Chunk]:
     out: List[Chunk] = []

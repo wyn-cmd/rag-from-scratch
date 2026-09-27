@@ -16,6 +16,9 @@ import re
 from typing import List, Sequence
 
 _TOKEN = re.compile(r"[a-z0-9]+")
+# -- stop-words -------------------------------------------------------
+#
+# Common words excluded from indexing.
 _STOPWORDS = {
     "a", "an", "and", "are", "as", "at", "be", "but", "by", "for", "from", "has",
     "have", "if", "in", "into", "is", "it", "its", "of", "on", "or", "such",
@@ -52,6 +55,9 @@ class HashingEmbedder(Embedder):
             raise ValueError("dim must be positive")
         self.dim = dim
 
+    # -- vector-computation -----------------------------------------------
+    #
+    # Compute vector representation of text.
     def _vector(self, text: str) -> List[float]:
         vector = [0.0] * self.dim
         for token in tokenize(text):
@@ -67,6 +73,9 @@ class HashingEmbedder(Embedder):
             return vector
         return [v / norm for v in vector]
 
+# -- embed-interface --------------------------------------------------
+#
+# Generate embeddings for a sequence of texts.
     def embed(self, texts: Sequence[str]) -> List[List[float]]:
         return [self._vector(text or "") for text in texts]
 
@@ -85,6 +94,9 @@ class SentenceTransformerEmbedder(Embedder):
         self.normalize = normalize
         self._model = None
 
+# -- load -------------------------------------------------------------
+#
+# Load the embedding model.
     def _load(self):
         if self._model is None:
             try:
@@ -97,12 +109,21 @@ class SentenceTransformerEmbedder(Embedder):
             self._model = SentenceTransformer(self.model_name)
         return self._model
 
+    # -- dim --------------------------------------------------------------
+    #
+    # The dimensionality of the embeddings.
     @property
     def dim(self) -> int:
         model = self._load()
         size = model.get_sentence_embedding_dimension()
         return int(size)
 
+# -- embedding --------------------------------------------------------
+#
+# Generate embeddings for input text.
+    # -- embed ------------------------------------------------------------
+    #
+    # Generate embeddings for a sequence of texts.
     def embed(self, texts: Sequence[str]) -> List[List[float]]:
         model = self._load()
         vectors = model.encode(list(texts), batch_size=self.batch_size,

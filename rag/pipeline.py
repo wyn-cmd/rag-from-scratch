@@ -62,7 +62,7 @@ class RagPipeline:
     def __len__(self) -> int:
         return len(self.store)
 
-    # -- indexing ---------------------------------------------------------
+# -- indexing ---------------------------------------------------------
 
     def add_documents(self, documents: Iterable[Document]) -> int:
         # Chunk and embed documents. Returns the number of chunks added.
@@ -108,7 +108,8 @@ class RagPipeline:
         return self.add_documents([load_url(url)])
 
     # -- querying ---------------------------------------------------------
-
+    #
+    # These return chunks directly. For an end-to-end RAG answer, use ask().
     def retrieve(self, question: str, top_k: Optional[int] = None,
                  min_score: Optional[float] = None) -> List[Retrieved]:
         # Retrieve chunks relevant to the question, applying a score threshold.
@@ -167,7 +168,8 @@ class RagPipeline:
                       retrieved=retrieved, prompt=prompt)
 
     # -- persistence ------------------------------------------------------
-
+    #
+    # Saving and reloading the index to a JSON file.
     def save(self, path: str) -> None:
         self.store.save(path)
 

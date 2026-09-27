@@ -22,12 +22,11 @@ def cosine(a: Sequence[float], b: Sequence[float]) -> float:
 
 
 class VectorStore:
-    """In memory store of chunks and their vectors.
-
-    Brute force cosine over every chunk. That is the whole index: no ANN, no
-    quantisation. Comfortable to a few thousand chunks, and the place to swap in
-    something smarter when it stops being comfortable.
-    """
+    # In memory store of chunks and their vectors.
+    #
+    # Brute force cosine over every chunk. That is the whole index: no ANN, no
+    # quantisation. Comfortable to a few thousand chunks, and the place to swap in
+    # something smarter when it stops being comfortable.
 
     def __init__(self, dim: Optional[int] = None) -> None:
         self.dim = dim
@@ -58,11 +57,10 @@ class VectorStore:
 
     def search(self, query_vector: Sequence[float], top_k: Optional[int] = 4,
                min_score: float = 0.0) -> List[Retrieved]:
-        """Best `top_k` chunks above `min_score`, highest first.
-
-        Pass `top_k=None` to get everything that clears the floor, which is
-        useful when inspecting an index rather than answering a question.
-        """
+        # Best `top_k` chunks above `min_score`, highest first.
+    #
+    # Pass `top_k=None` to get everything that clears the floor, which is
+    # useful when inspecting an index rather than answering a question.
         if top_k is not None and top_k <= 0:
             raise ValueError("top_k must be positive, or None for everything")
         scored = [
@@ -73,6 +71,9 @@ class VectorStore:
         scored.sort(key=lambda item: item.score, reverse=True)
         return scored if top_k is None else scored[:top_k]
 
+    # -- clear ------------------------------------------------------------
+    #
+    # Reset the index.
     def clear(self) -> None:
         self._chunks = []
         self._vectors = []
@@ -98,6 +99,8 @@ class VectorStore:
         return removed
 
     def save(self, path: str) -> None:
+        # Save index to a JSON file, using an atomic rename to prevent
+        # truncation on failure.
         payload = {
             "version": 1,
             "dim": self.dim,
@@ -132,6 +135,9 @@ class VectorStore:
                 pass
             raise
 
+    # -- load -------------------------------------------------------------
+    #
+    # Reload index from JSON file.
     @classmethod
     def load(cls, path: str) -> "VectorStore":
         with open(path, encoding="utf-8") as handle:
