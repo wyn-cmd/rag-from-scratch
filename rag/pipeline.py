@@ -2,7 +2,7 @@
 
 import os
 from dataclasses import dataclass, field
-from typing import Iterable, List, Optional, Sequence
+from typing import Dict, Any, Iterable, List, Optional, Sequence
 
 from .chunking import chunk_documents
 from .embedders import Embedder, HashingEmbedder
@@ -111,16 +111,22 @@ class RagPipeline:
     #
     # These return chunks directly. For an end-to-end RAG answer, use ask().
     def retrieve(self, question: str, top_k: Optional[int] = None,
-                 min_score: Optional[float] = None) -> List[Retrieved]:
+                 min_score: Optional[float] = None,
+                 metadata_filter: Optional[Dict[str, Any]] = None) -> List[Retrieved]:
         # Retrieve chunks relevant to the question, applying a score threshold.
         if not len(self.store):
             return []
         vector = self.embedder.embed([question])[0]
-        return self.store.search(
+        results = self.store.search(
             vector,
-            top_k=self.top_k if top_k is None else top_k,
+            top_k=None,
             min_score=self.min_score if min_score is None else min_score,
         )
+        if metadata_filter:
+            results = [r for r in results if all(r.chunk.metadata.get(k) == v for k, v in metadata_filter.items())]
+        
+        limit = self.top_k if top_k is None else top_k
+        return results[:limit]
 
     def retrieve_all(self, question: str, min_score: Optional[float] = None) -> List[Retrieved]:
         # Every chunk above the floor, not just the top self.top_k.
