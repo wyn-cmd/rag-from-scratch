@@ -1,9 +1,8 @@
-"""Split text into retrievable chunks.
-
-Paragraph boundaries come first because they usually line up with topic changes.
-Anything too long for one chunk gets broken on sentence boundaries, and a single
-sentence longer than the limit is hard wrapped so no chunk can ever exceed it.
-"""
+# Split text into retrievable chunks.
+#
+# Paragraph boundaries come first because they usually line up with topic changes.
+# Anything too long for one chunk gets broken on sentence boundaries, and a single
+# sentence longer than the limit is hard wrapped so no chunk can ever exceed it.
 
 import re
 from typing import Iterable, List
@@ -60,7 +59,7 @@ def _pieces(text: str, max_chars: int) -> List[str]:
 
 
 def _tail_from(chunk: str, overlap: int) -> str:
-    """Take the last `overlap` characters, starting at a word boundary."""
+# Take the last `overlap` characters, starting at a word boundary.
     if overlap <= 0:
         return ""
     tail = chunk[-overlap:]
@@ -70,12 +69,11 @@ def _tail_from(chunk: str, overlap: int) -> str:
 
 
 def chunk_text(text: str, max_chars: int = 800, overlap: int = 120, min_chars: int = 80) -> List[str]:
-    """Split text into chunks of at most `max_chars`, with `overlap` carried over.
-
-    `min_chars` is a merge rule rather than a filter: a final chunk shorter than
-    it gets folded into the previous one so nothing is dropped and there is no
-    orphan fragment to retrieve.
-    """
+    # Split text into chunks of at most `max_chars`, with `overlap` carried over.
+    #
+    # `min_chars` is a merge rule rather than a filter: a final chunk shorter than
+    # it gets folded into the previous one so nothing is dropped and there is no
+    # orphan fragment to retrieve.
     if max_chars <= 0:
         raise ValueError("max_chars must be positive")
     if overlap < 0:
@@ -118,7 +116,7 @@ def chunk_text(text: str, max_chars: int = 800, overlap: int = 120, min_chars: i
 
 def chunk_document(document: Document, max_chars: int = 800, overlap: int = 120,
                    min_chars: int = 80) -> List[Chunk]:
-    """Chunk one document, recording roughly where each chunk came from."""
+    # Chunk one document, recording roughly where each chunk came from.
     chunks: List[Chunk] = []
     cursor = 0
     for index, text in enumerate(chunk_text(document.text, max_chars, overlap, min_chars)):
