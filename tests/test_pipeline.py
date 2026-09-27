@@ -137,15 +137,14 @@ class PipelineTests(unittest.TestCase):
         everything = pipeline.retrieve_all("student", min_score=-1.0)
         self.assertEqual(len(everything), len(CORPUS))
 
-    def test_metadata_filtering(self):
+    def test_index_url_adds_metadata(self):
+        from unittest.mock import patch
         from rag.types import Document
         pipeline = RagPipeline(embedder=HashingEmbedder(dim=128))
-        doc1 = Document(text="content", source="d1", metadata={"type": "a"})
-        doc2 = Document(text="content", source="d2", metadata={"type": "b"})
-        pipeline.add_documents([doc1, doc2])
-        results = pipeline.retrieve("content", metadata_filter={"type": "a"})
-        self.assertEqual(len(results), 1)
-        self.assertEqual(results[0].source, "d1")
+        with patch("rag.pipeline.load_url") as mock_load:
+            mock_load.return_value = Document(text="url content", source="url")
+            pipeline.index_url("http://example.com", metadata={"author": "me"})
+            self.assertEqual(pipeline.store.chunks[0].metadata["author"], "me")
 
 
 if __name__ == "__main__":

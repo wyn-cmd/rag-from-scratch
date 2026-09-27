@@ -103,9 +103,12 @@ class RagPipeline:
         """Index every matching file under a directory."""
         return self.add_documents(load_directory(path, glob=glob, recursive=recursive))
 
-    def index_url(self, url: str) -> int:
+    def index_url(self, url: str, metadata: Optional[Dict[str, Any]] = None) -> int:
         # Fetch a page, strip it to text and index it.
-        return self.add_documents([load_url(url)])
+        document = load_url(url)
+        if metadata:
+            document.metadata.update(metadata)
+        return self.add_documents([document])
 
     # -- querying ---------------------------------------------------------
     #
