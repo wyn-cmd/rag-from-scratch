@@ -135,7 +135,17 @@ class VectorStore:
                 pass
             raise
 
+    def stats(self) -> dict:
+        # Return a report on the current state of the index.
+        return {
+            "source_count": len({c.source for c in self._chunks}),
+            "chunk_count": len(self._chunks),
+            "avg_chunk_length": sum(len(c.text) for c in self._chunks) / len(self._chunks) if self._chunks else 0.0,
+            "embedding_dimension": self.dim,
+        }
+
     # -- load -------------------------------------------------------------
+
     #
     # Reload index from JSON file.
     @classmethod

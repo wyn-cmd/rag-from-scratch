@@ -148,6 +148,17 @@ class VectorStoreTests(unittest.TestCase):
                 store.save(path)
             self.assertEqual(os.listdir(tmp), [])
 
+    def test_stats(self):
+        store = VectorStore()
+        c1 = Chunk(text="a" * 100, source="s1", index=0, start=0, metadata={})
+        c2 = Chunk(text="b" * 200, source="s2", index=0, start=0, metadata={})
+        store.add([c1, c2], [[0.1]*3, [0.2]*3])
+        stats = store.stats()
+        self.assertEqual(stats["source_count"], 2)
+        self.assertEqual(stats["chunk_count"], 2)
+        self.assertEqual(stats["avg_chunk_length"], 150.0)
+        self.assertEqual(stats["embedding_dimension"], 3)
+
 
 if __name__ == "__main__":
     unittest.main()
