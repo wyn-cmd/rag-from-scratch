@@ -1,15 +1,14 @@
-"""Turn text into vectors.
-
-Two embedders, and the difference between them matters:
-
-    HashingEmbedder             no dependencies, matches on vocabulary
-    SentenceTransformerEmbedder real embeddings, matches on meaning
-
-Both expose `dim` and `embed(texts) -> list[list[float]]`, so the store does not
-care which one produced the vectors. Whichever you choose, the same instance has
-to embed both the documents and the queries, otherwise the similarity scores are
-comparing two different coordinate systems.
-"""
+# Turn text into vectors.
+#
+# Two embedders, and the difference between them matters:
+#
+#     HashingEmbedder             no dependencies, matches on vocabulary
+#     SentenceTransformerEmbedder real embeddings, matches on meaning
+#
+# Both expose `dim` and `embed(texts) -> list[list[float]]`, so the store does not
+# care which one produced the vectors. Whichever you choose, the same instance has
+# to embed both the documents and the queries, otherwise the similarity scores are
+# comparing two different coordinate systems.
 
 import hashlib
 import math
@@ -26,15 +25,14 @@ _STOPWORDS = {
 
 
 def tokenize(text: str) -> List[str]:
-    """Lowercase word tokens, stopwords dropped, plus adjacent word pairs."""
+    # Lowercase word tokens, stopwords dropped, plus adjacent word pairs.
     words = [w for w in _TOKEN.findall(text.lower()) if len(w) > 1 and w not in _STOPWORDS]
     bigrams = [f"{a}_{b}" for a, b in zip(words, words[1:])]
     return words + bigrams
 
 
 class Embedder:
-    """Base class documenting the interface: a `dim` plus `embed(texts)`."""
-
+    # Base class documenting the interface: a `dim` plus `embed(texts)`.
     dim: int
 
     def embed(self, texts: Sequence[str]) -> List[List[float]]:
@@ -42,13 +40,12 @@ class Embedder:
 
 
 class HashingEmbedder(Embedder):
-    """Hash tokens into fixed buckets and normalise. Behaves like bag of words.
-
-    Cheap, deterministic and dependency free, which makes it good for tests and
-    for running the pipeline without a multi gigabyte download. It matches shared
-    vocabulary only: ask a question with none of the document's words in it and
-    the score collapses, which is the limitation real embeddings exist to solve.
-    """
+    # Hash tokens into fixed buckets and normalise. Behaves like bag of words.
+    #
+    # Cheap, deterministic and dependency free, which makes it good for tests and
+    # for running the pipeline without a multi gigabyte download. It matches shared
+    # vocabulary only: ask a question with none of the document's words in it and
+    # the score collapses, which is the limitation real embeddings exist to solve.
 
     def __init__(self, dim: int = 512) -> None:
         if dim <= 0:
@@ -75,12 +72,11 @@ class HashingEmbedder(Embedder):
 
 
 class SentenceTransformerEmbedder(Embedder):
-    """Real sentence embeddings through sentence-transformers.
-
-    Defaults to all-MiniLM-L6-v2: 384 dimensions, small enough to run on a laptop
-    CPU and good enough for retrieval over prose. Imported lazily so the package
-    works without torch installed.
-    """
+    # Real sentence embeddings through sentence-transformers.
+    #
+    # Defaults to all-MiniLM-L6-v2: 384 dimensions, small enough to run on a laptop
+    # CPU and good enough for retrieval over prose. Imported lazily so the package
+    # works without torch installed.
 
     def __init__(self, model_name: str = "all-MiniLM-L6-v2", batch_size: int = 32,
                  normalize: bool = True) -> None:
