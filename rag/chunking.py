@@ -80,12 +80,15 @@ def _tail_from(chunk: str, overlap: int) -> str:
 # -- chunking-public --------------------------------------------------
 #
 # Main interface for chunking.
-def chunk_text(text: str, max_chars: int = 800, overlap: int = 120, min_chars: int = 80) -> List[str]:
+def chunk_text(text: str, max_chars: int = 800, overlap: int = 120, min_chars: int = 80,
+               sentence_aware: bool = False) -> List[str]:
     # Split text into chunks of at most `max_chars`, with `overlap` carried over.
     #
     # `min_chars` is a merge rule rather than a filter: a final chunk shorter than
     # it gets folded into the previous one so nothing is dropped and there is no
     # orphan fragment to retrieve.
+    #
+    # `sentence_aware` tries to align chunk boundaries with sentence endings when possible.
     if max_chars <= 0:
         raise ValueError("max_chars must be positive")
     if overlap < 0:
@@ -108,14 +111,22 @@ def chunk_text(text: str, max_chars: int = 800, overlap: int = 120, min_chars: i
             current = candidate
             continue
         chunks.append(current)
-        # Carry the tail of the finished chunk into the next one, but only as much
-        # of it as still fits next to the piece. Without this the overlap silently
-        # vanishes whenever a piece is close to the limit, which is the kind of
-        # failure that looks like the model simply missing things.
-        room = max_chars - len(piece) - 1
-        tail = _tail_from(current, min(overlap, room)) if room > 0 else ""
-        merged = f"{tail} {piece}".strip() if tail else piece
-        current = merged if len(merged) <= max_chars else piece
+        
+        # If sentence_aware, try to split at a sentence boundary if current piece allows
+        if sentence_aware and len(piece) > (max_chars // 2):
+            sentences = split_sentences(current)
+            if sentences and len(sentences) > 1:
+                # keep last sentence as new current
+                current = sentences[-1]
+                # re-add previous ones to chunks
+                chunks[-1] = " ".join(sentences[:-1])
+            else:
+                current = piece
+        else:
+            room = max_chars - len(piece) - 1
+            tail = _tail_from(current, min(overlap, room)) if room > 0 else ""
+            merged = f"{tail} {piece}".strip() if tail else piece
+            current = merged if len(merged) <= max_chars else piece
 
     if current:
         if chunks and len(current) < min_chars and len(f"{chunks[-1]} {current}") <= max_chars:

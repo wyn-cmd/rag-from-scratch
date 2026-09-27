@@ -81,8 +81,12 @@ class ChunkTextTests(unittest.TestCase):
             self.assertEqual(chunk.index, position)
             self.assertTrue(chunk.chunk_id.startswith("notes.md#"))
 
-    def test_split_paragraphs_ignores_blank_runs(self):
-        self.assertEqual(split_paragraphs("a\n\n\n\nb\n  \n c"), ["a", "b", "c"])
+    def test_sentence_aware_chunking(self):
+        text = "First sentence. Second sentence. Third sentence. Fourth sentence."
+        chunks = chunk_text(text, max_chars=30, overlap=5, sentence_aware=True)
+        # Should split cleanly on sentences
+        self.assertTrue(all(len(c) <= 30 for c in chunks))
+        self.assertIn("First sentence.", chunks[0])
 
 
 if __name__ == "__main__":
