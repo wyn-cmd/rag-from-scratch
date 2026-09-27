@@ -167,13 +167,12 @@ class RagPipeline:
         return Answer(text=text, sources=unique_sources(retrieved),
                       retrieved=retrieved, prompt=prompt)
 
-    # -- persistence ------------------------------------------------------
-    #
-    # Saving and reloading the index to a JSON file.
+# -- persistence ------------------------------------------------------
+#
+# Saving and reloading the index to a JSON file.
     def save(self, path: str) -> None:
         self.store.save(path)
 
-    # Reload an index. Pass the same embedder you indexed with.
     @classmethod
     def load(cls, path: str, embedder: Optional[Embedder] = None,
              generator: Optional[Generator] = None, **kwargs) -> "RagPipeline":
@@ -187,3 +186,25 @@ class RagPipeline:
         return (f"{chunks} chunks, {dim or 'unknown'} dimensions, "
                 f"embedder={type(self.embedder).__name__}, "
                 f"generator={type(self.generator).__name__}")
+
+
+# -- cli-mode ---------------------------------------------------------
+#
+# A simple CLI for interactive querying.
+class QueryCLI:
+    def __init__(self, pipeline: RagPipeline) -> None:
+        self.pipeline = pipeline
+
+    def run(self) -> None:
+        print("Ready for queries. Type 'exit' to quit.")
+        while True:
+            try:
+                question = input("> ")
+                if question.strip().lower() == "exit":
+                    break
+                answer = self.pipeline.ask(question)
+                print(answer)
+            except EOFError:
+                break
+            except Exception as e:
+                print(f"Error: {e}")
