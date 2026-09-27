@@ -20,8 +20,7 @@ PROMPT_RULES = (
 
 @dataclass
 class Answer:
-    """What `ask()` returns."""
-
+    # What `ask()` returns.
     text: str
     sources: List[str] = field(default_factory=list)
     retrieved: List[Retrieved] = field(default_factory=list)
@@ -31,6 +30,7 @@ class Answer:
         return bool(self.text.strip())
 
     def __str__(self) -> str:
+        # String representation of an Answer.
         stripped = self.text.strip()
         if not self.sources:
             return stripped
@@ -38,8 +38,7 @@ class Answer:
 
 
 class RagPipeline:
-    """A retrieval augmented generation pipeline with swappable stage objects."""
-
+    # A retrieval augmented generation pipeline with swappable stage objects.
     def __init__(self, embedder: Optional[Embedder] = None,
                  generator: Optional[Generator] = None,
                  store: Optional[VectorStore] = None,
@@ -66,7 +65,7 @@ class RagPipeline:
     # -- indexing ---------------------------------------------------------
 
     def add_documents(self, documents: Iterable[Document]) -> int:
-        """Chunk and embed documents. Returns the number of chunks added."""
+        # Chunk and embed documents. Returns the number of chunks added.
         chunks: List[Chunk] = chunk_documents(
             list(documents), max_chars=self.chunk_size,
             overlap=self.chunk_overlap, min_chars=self.min_chunk_chars,
@@ -105,13 +104,14 @@ class RagPipeline:
         return self.add_documents(load_directory(path, glob=glob, recursive=recursive))
 
     def index_url(self, url: str) -> int:
-        """Fetch a page, strip it to text and index it. Needs the optional stack."""
+        # Fetch a page, strip it to text and index it.
         return self.add_documents([load_url(url)])
 
     # -- querying ---------------------------------------------------------
 
     def retrieve(self, question: str, top_k: Optional[int] = None,
                  min_score: Optional[float] = None) -> List[Retrieved]:
+        # Retrieve chunks relevant to the question, applying a score threshold.
         if not len(self.store):
             return []
         vector = self.embedder.embed([question])[0]
@@ -138,8 +138,8 @@ class RagPipeline:
             min_score=self.min_score if min_score is None else min_score,
         )
 
+    # Format the context block. Numbered blocks are labelled with their source.
     def build_prompt(self, question: str, retrieved: Sequence[Retrieved]) -> str:
-        """Format the context block. Numbered blocks are labelled with their source."""
         lines = [PROMPT_RULES, "", "Context:"]
         for position, item in enumerate(retrieved, start=1):
             lines.append(f"[{position}] source: {item.chunk.label()}")
@@ -151,7 +151,7 @@ class RagPipeline:
 
     def ask(self, question: str, top_k: Optional[int] = None,
             min_score: Optional[float] = None) -> Answer:
-        """Retrieve, assemble and generate. Always returns an Answer."""
+        # Retrieve, assemble and generate. Always returns an Answer.
         retrieved = self.retrieve(question, top_k=top_k, min_score=min_score)
         if not retrieved:
             return Answer(
@@ -171,14 +171,15 @@ class RagPipeline:
     def save(self, path: str) -> None:
         self.store.save(path)
 
+    # Reload an index. Pass the same embedder you indexed with.
     @classmethod
     def load(cls, path: str, embedder: Optional[Embedder] = None,
              generator: Optional[Generator] = None, **kwargs) -> "RagPipeline":
-        """Reload an index. Pass the same embedder you indexed with."""
         return cls(embedder=embedder, generator=generator,
                    store=VectorStore.load(path), **kwargs)
 
     def describe(self) -> str:
+        # Return a description of the pipeline.
         chunks = len(self.store)
         dim = self.store.dim
         return (f"{chunks} chunks, {dim or 'unknown'} dimensions, "
