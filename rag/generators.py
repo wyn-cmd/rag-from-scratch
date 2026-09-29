@@ -1,38 +1,35 @@
-"""Produce an answer from a prompt.
-
-Same shape as the embedders: one dependency free implementation and one that
-loads a real model, both behind `generate(prompt, context="")`.
-
-The context argument exists so the extractive fallback can answer without a
-model. Real generators only need the prompt, since the context is already
-formatted into it by the pipeline.
-"""
+# Produce an answer from a prompt.
+# Same shape as the embedders: one dependency free implementation and one that
+# loads a real model, both behind generate(prompt, context="").
+# The context argument exists so the extractive fallback can answer without a
+# model. Real generators only need the prompt, since the context is already
+# formatted into it by the pipeline.
 
 import re
 from typing import List, Optional
 
 
 class Generator:
-    """Base class documenting the interface."""
+    # Base class documenting the interface.
 
     def generate(self, prompt: str, context: str = "") -> str:
         raise NotImplementedError
 
 
 class ExtractiveGenerator(Generator):
-    """Answer by quoting the best passage. No model, no download, no invention.
-
-    This is a development fallback, not a question answerer. It exists so the
-    pipeline can be exercised end to end and asserted on in tests without a
-    multi gigabyte install, and so `ask()` never returns an empty string just
-    because torch is missing.
-    """
+    # Answer by quoting the best passage. No model, no download, no invention.
+    # This is a development fallback, not a question answerer. It exists so the
+    # pipeline can be exercised end to end and asserted on in tests without a
+    # multi gigabyte install, and so ask() never returns an empty string just
+    # because torch is missing.
 
     def __init__(self, max_chars: int = 600, max_sentences: int = 4) -> None:
         self.max_chars = max_chars
         self.max_sentences = max_sentences
 
     def generate(self, prompt: str, context: str = "") -> str:
+        if not prompt or not isinstance(prompt, str):
+            return "No prompt provided."
         passage = (context or "").strip()
         if not passage:
             return "No context was retrieved, so there is nothing to quote."
@@ -48,12 +45,10 @@ class ExtractiveGenerator(Generator):
 
 
 class TransformersGenerator(Generator):
-    """Text generation through transformers with a causal language model.
-
-    Kept deliberately plain: a pipeline, a token budget and a prompt. Batching,
-    quantisation, GPU placement and streaming all belong to whatever you build
-    on top, and none of them change what the retrieval half of this project does.
-    """
+    # Text generation through transformers with a causal language model.
+    # Kept deliberately plain: a pipeline, a token budget and a prompt. Batching,
+    # quantisation, GPU placement and streaming all belong to whatever you build
+    # on top, and none of them change what the retrieval half of this project does.
 
     def __init__(self, model_name: str = "meta-llama/Llama-3.2-1B-Instruct",
                  max_new_tokens: int = 256, temperature: float = 0.2,
@@ -100,7 +95,7 @@ class TransformersGenerator(Generator):
 
 
 class RecordingGenerator(Generator):
-    """Records prompts and returns a fixed reply. Handy in tests."""
+    # Records prompts and returns a fixed reply. Handy in tests.
 
     def __init__(self, reply: str = "recorded reply") -> None:
         self.reply = reply
