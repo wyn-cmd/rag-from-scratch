@@ -128,11 +128,11 @@ The prompt states the rules plainly and then supplies context:
 
 ```
 Answer the question using only the context below.
-Cite the source in square brackets after each claim you make.
-If the context does not contain the answer, say that plainly instead of guessing.
+Cite the source label in square brackets after each claim you make.
+If the context does not contain the answer, say so plainly instead of guessing.
 
 Context:
-[1] source: opening_hours.md
+[1] source: opening_hours.md (chunk 0)
 The observatory opens at 19:00 ...
 
 Question: When does the observatory close?
@@ -140,14 +140,6 @@ Answer:
 ```
 
 The instruction to admit ignorance matters more than it looks. Without it, a model asked a question the context does not cover will answer from its own weights, and the whole point of retrieval is that it should not.
-
-## Testing
-
-```bash
-python3 -m unittest discover tests -v
-```
-
-The suite runs on the standard library alone: no network, no model downloads, no fixtures to generate. It covers chunk sizing and overlap, the cosine maths and the store round trip, retrieval ranking including the score floor, prompt assembly, and the HTML cleanup in the loaders. The two model backed classes are the only paths not covered, because exercising them means downloading gigabytes.
 
 ## Testing
 
