@@ -113,21 +113,30 @@ class RagPipeline:
     # -- querying ---------------------------------------------------------
     #
     # These return chunks directly. For an end-to-end RAG answer, use ask().
-    def retrieve(self, question: str, top_k: Optional[int] = None,
-                 min_score: Optional[float] = None,
-                 metadata_filter: Optional[Dict[str, Any]] = None) -> List[Retrieved]:
-        # Retrieve chunks relevant to the question, applying a score threshold.
+    def _rank(self, question: str, min_score: Optional[float] = None) -> List[Retrieved]:
+        # Embed the question and rank every chunk that clears the score floor.
+        #
+        # retrieve() and retrieve_all() both opened with the same six lines:
+        # short circuit an empty store, embed the question, search with
+        # top_k=None. Only the amount of the ranked list they hand back
+        # differs, so the shared part lives here.
         if not len(self.store):
             return []
         vector = self.embedder.embed([question])[0]
-        results = self.store.search(
+        return self.store.search(
             vector,
             top_k=None,
             min_score=self.min_score if min_score is None else min_score,
         )
+
+    def retrieve(self, question: str, top_k: Optional[int] = None,
+                 min_score: Optional[float] = None,
+                 metadata_filter: Optional[Dict[str, Any]] = None) -> List[Retrieved]:
+        # Retrieve chunks relevant to the question, applying a score threshold.
+        results = self._rank(question, min_score=min_score)
         if metadata_filter:
             results = [r for r in results if all(r.chunk.metadata.get(k) == v for k, v in metadata_filter.items())]
-        
+
         limit = self.top_k if top_k is None else top_k
         return results[:limit]
 
@@ -139,14 +148,7 @@ class RagPipeline:
         # pipeline default", so there was no way to reach it without building
         # a VectorStore query by hand. Useful for inspecting an index, or for
         # a caller who wants to apply their own ranking on top of the scores.
-        if not len(self.store):
-            return []
-        vector = self.embedder.embed([question])[0]
-        return self.store.search(
-            vector,
-            top_k=None,
-            min_score=self.min_score if min_score is None else min_score,
-        )
+        return self._rank(question, min_score=min_score)
 
     # Format the context block. Numbered blocks are labelled with their source.
     def build_prompt(self, question: str, retrieved: Sequence[Retrieved]) -> str:
